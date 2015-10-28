@@ -11,6 +11,7 @@ namespace ZfTable;
 use Zend\View\Resolver;
 use Zend\View\Renderer\PhpRenderer;
 use ZfTable\Options\ModuleOptions;
+use Zend\Session\Container;
 
 class Render extends AbstractCommon
 {
@@ -68,15 +69,12 @@ class Render extends AbstractCommon
 
     public function renderNewDataTableJson()
     {
-
         $render = $this->getTable()->getRow()->renderRows('array');
-
         $res = array(
             'draw' => $render,
             'recordsFiltered' => $this->getTable()->getSource()->getPaginator()->getTotalItemCount(),
             'data' => $render,
         );
-
         return json_encode($res);
     }
 
@@ -134,14 +132,16 @@ class Render extends AbstractCommon
         $render = '';
         $tableConfig = $this->getTable()->getOptions();
 
-        if ($tableConfig->getShowColumnFilters()) {
-            $render .= $this->renderFilters();
-        }
 
         $render .= $this->renderHead();
         $render = sprintf('<thead>%s</thead>', $render);
         $render .= $this->getTable()->getRow()->renderRows();
-        $table = sprintf('<table %s>%s</table>', $this->getTable()->getAttributes(), $render);
+        
+        if ($tableConfig->getShowColumnFilters()) {
+        	$render .= $this->renderFilters();
+        }        
+        
+        $table = sprintf('<div class="zf-table"><table %s>%s</table></div>', $this->getTable()->getAttributes(), $render);
 
         $view = new \Zend\View\Model\ViewModel();
         $view->setTemplate('container');
@@ -158,7 +158,8 @@ class Render extends AbstractCommon
         $view->setVariable('showPagination', $tableConfig->getShowPagination());
         $view->setVariable('showItemPerPage', $tableConfig->getShowItemPerPage());
         $view->setVariable('showExportToCSV', $tableConfig->getShowExportToCSV());
-
+        $view->setVariable('subtitles', $this->getTable()->getSubtitles());
+        
         return $this->getRenderer()->render($view);
     }
 
@@ -172,28 +173,45 @@ class Render extends AbstractCommon
     {
         $headers = $this->getTable()->getHeaders();
         $render = '';
-
+        
+        $options = $this->getTable()->getOptions();
+        $tableName = strtolower($options->getName());
+        
+        $session = new Container();
+        
         foreach ($headers as $name => $params) {
-
+            
             if (isset($params['filters'])) {
                 $value = $this->getTable()->getParamAdapter()->getValueOfFilter($name);
-                $id = 'zff_'.$name;
+                $id = 'zff_' . $tableName . '_' . $name;
 
                 if (is_string($params['filters'])) {
                     $element = new \Zend\Form\Element\Text($id);
+                    $element->setAttribute('placeholder', 'Pesquisar ' . strtolower($params['title']));
                 } else {
                     $element = new \Zend\Form\Element\Select($id);
                     $element->setValueOptions($params['filters']);
                 }
-                $element->setAttribute('class', 'filter form-control');
+                
+                $class = '';
+                
+                if (isset($params['filter_class'])) {
+                    $class = trim($params['filter_class']);
+                }
+                
+                $element->setAttribute('class', 'filter form-control ' . $class);
+                
+                // $value = $session->offsetGet($id);
+                
                 $element->setValue($value);
-
+                $session->offsetSet($id, $value);
+                
                 $render .= sprintf('<td>%s</td>', $this->getRenderer()->formRow($element));
             } else {
                 $render .= '<td></td>';
             }
         }
-        return sprintf('<tr>%s</tr>', $render);
+        return sprintf('<tfoot><tr>%s</tr><tfoot>', $render);
     }
 
 

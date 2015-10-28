@@ -77,7 +77,6 @@ class AdapterNewDatatables extends AbstractAdapter implements
 
         $this->page = (isset($array['start'])) ? ($array['start'] / $array['length'] + 1) : self::DEFAULT_PAGE;
 
-
         if (isset($array['order'][0]['column'])) {
             $headers = $this->getTable()->getHeaders();
             $slice = array_slice($headers, $array['order'][0]['column'], 1);
@@ -85,7 +84,8 @@ class AdapterNewDatatables extends AbstractAdapter implements
         }
         $this->order = (isset($array['order'][0]['dir'])) ? $array['order'][0]['dir'] : self::DEFAULT_ORDER;
         $this->itemCountPerPage = (isset($array['start'])) ? $array['length'] : 20;
-        $this->quickSearch = (isset($array['columns']['search']['value'])) ? $array['columns']['search']['value'] : '';
+        $this->quickSearch = (isset($array['search']['value'])) ? $array['search']['value'] : '';
+        
     }
 
     /**

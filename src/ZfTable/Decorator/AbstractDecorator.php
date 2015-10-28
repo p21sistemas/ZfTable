@@ -83,4 +83,53 @@ abstract class AbstractDecorator extends AbstractCommon implements DecoratorInte
 
         return true;
     }
+    
+    /**
+     * Get View renderer
+     *
+     * @return \Zend\View\Renderer\PhpRenderer
+     */
+    public function getView()
+    {
+    	return $this->getTable()->getViewHelperManager()->getRenderer();
+    }
+    
+    /**
+     * Retorna a url params com controller atual
+     *
+     * Preenche também a action informada e também os parametros complementares da uri
+     *
+     * @param string $action
+     * @param array $params (passar parametros para adicionar na uri, por exemplo, id)
+     * @return array
+     */
+    protected function getUrlParams($action, $params = array())
+    {
+    	$routeMatch = $this->getTable()->getServiceLocator()
+    	->get('application')
+    	->getMvcEvent()
+    	->getRouteMatch();
+    
+    	$controller = $routeMatch->getParam('__CONTROLLER__');
+    	$urlParams = array(
+    			'controller' => $controller,
+    			'action' => $action
+    	);
+    
+    	return array_merge($urlParams, $params);
+    }
+    
+    /**
+     * Retorna a rota atual
+     *
+     * @return string
+     */
+    protected function getRoute()
+    {
+    	$routeMatch = $this->getTable()->getServiceLocator()
+    	->get('application')
+    	->getMvcEvent()
+    	->getRouteMatch();
+    	return $routeMatch->getMatchedRouteName();
+    }
 }

@@ -16,8 +16,12 @@ use ZfTable\Options\ModuleOptions;
 
 use ZfTable\Form\TableForm;
 use ZfTable\Form\TableFilter;
+use Doctrine\ORM\QueryBuilder;
 
-abstract class AbstractTable extends AbstractElement implements TableInterface
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+
+abstract class AbstractTable extends AbstractElement implements TableInterface, ServiceLocatorAwareInterface
 {
 
     /**
@@ -31,6 +35,13 @@ abstract class AbstractTable extends AbstractElement implements TableInterface
      * @var array
      */
     protected $headers;
+    
+    /**
+     * Legendas da tabela
+     * 
+     * @var array
+     */
+    protected $subtitles = array();
 
     /**
      * Database adapter
@@ -95,7 +106,70 @@ abstract class AbstractTable extends AbstractElement implements TableInterface
      */
     protected $options = null;
 
-
+    /**
+     * ServiceManager
+     *
+     * @var ServiceManager
+     */
+    private $sm;
+    
+    /**
+     * 
+     * @var \Application\Repository\Repository
+     */
+    private $repository;
+    
+    /**
+     * 
+     * @return \Application\Repository\Repository
+     */
+    public function getRepository()
+    {
+    	return $this->repository;
+    }
+    
+    /**
+     * 
+     * @param \Application\Repository\Repository $repo
+     * @return \ZfTable\AbstractTable
+     */
+    public function setRepository(\Application\Repository\Repository $repo)
+    {
+    	$this->repository = $repo;
+    	
+    	return $this;
+    }
+    
+    /**
+     * Set service locator
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     */
+    public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
+    {
+    	$this->sm = $serviceLocator;
+    }
+    
+    /**
+     * Get service locator
+     *
+     * @return ServiceLocatorInterface
+     */
+    public function getServiceLocator()
+    {
+    	return $this->sm;
+    }
+    
+    /**
+     * Retornar view helper manager
+     *
+     * @return \Zend\View\HelperPluginManager
+     */
+    public function getViewHelperManager()
+    {
+    	return $this->getServiceLocator()->get('ViewHelperManager');
+    }
+    
     /**
      * Check if table has benn initializable
      * @return boolean
@@ -190,7 +264,6 @@ abstract class AbstractTable extends AbstractElement implements TableInterface
      */
     public function setSource($source)
     {
-
         if ($source instanceof \Zend\Db\Sql\Select) {
             $source = new Source\SqlSelect($source);
         } elseif ($source instanceof \Doctrine\ORM\QueryBuilder) {
@@ -280,7 +353,7 @@ abstract class AbstractTable extends AbstractElement implements TableInterface
         }
 
         $this->init();
-
+        
         $this->initFilters($this->getSource()->getSource());
     }
 
@@ -291,15 +364,6 @@ abstract class AbstractTable extends AbstractElement implements TableInterface
      * Function replace by initFilters
      */
     protected function initQuickSearch()
-    {
-
-    }
-
-    /**
-     * Init filters for quick search or filters for each column
-     * @param \Zend\Db\Sql\Select $query
-     */
-    protected function initFilters($query)
     {
 
     }
@@ -431,20 +495,71 @@ abstract class AbstractTable extends AbstractElement implements TableInterface
     }
 
     /**
-     *
-     * @return TableForm
+     * Init config of decorators
      */
-    public function getForm()
+    abstract public function init();
+    
+    /**
+     * Init filters for quick search or filters for each column
+     *
+     * @param QueryBuilder $query
+     */
+    abstract public function initFilters(QueryBuilder $query);
+    
+    /**
+     * 
+     * @param string $route
+     * @param array $urlParams
+     * @param array $attributes
+     */
+    public function link($route, array $urlParams = array(), array $attributes = array())
     {
-        return new TableForm(array_keys($this->headers));
+        $link = $this->getViewHelperManager()->get('link');
+        return $link->__invoke($route, $urlParams, $attributes);
+    }
+    
+    /**
+     * Retorna o usuário atual
+     *
+     * @return \Autenticacao\Entity\Usuario
+     */
+    protected function getIdentity()
+    {
+        $autuService = $this->getServiceLocator()->get('Zend\Authentication\AuthenticationService');
+        $identity = $autuService->getIdentity();
+    
+        return $identity;
+    }
+    
+    /**
+     * Retorna a instituição atual
+     *
+     * @return \Cadastro\Entity\Instituicao
+     */
+    protected function getInstituicao()
+    {
+        $identity = $this->getIdentity();
+        return $identity->getInstituicao();
+    }    
+
+    /**
+     * 
+     * @return array
+     */
+    public function getSubtitles()
+    {
+        return $this->subtitles;
     }
 
     /**
-     *
-     * @return TableFilter
+     * 
+     * @param array $subtitles
+     * @return \ZfTable\AbstractTable
      */
-    public function getFilter()
+    public function setSubtitles(array $subtitles)
     {
-        return new TableFilter(array_keys($this->headers));
+        $this->subtitles = $subtitles;
+        
+        return $this;
     }
 }

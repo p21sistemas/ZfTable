@@ -29,7 +29,21 @@ class DecoratorPluginManager extends AbstractPluginManager
         'celltemplate' => '\ZfTable\Decorator\Cell\Template',
         'celleditable' => '\ZfTable\Decorator\Cell\Editable',
         'cellcallable' => '\ZfTable\Decorator\Cell\CallableDecorator',
-
+                
+        'headercallable' => '\ZfTable\Decorator\Header\CallableDecorator',        
+        
+        'headerinserir' => '\ZfTable\Decorator\Header\Link\Inserir',
+    		
+        'cellstatus' => '\ZfTable\Decorator\Cell\Status',
+        'celldateformat' => '\ZfTable\Decorator\Cell\DateFormat',
+    	'cellvisualizar' => '\ZfTable\Decorator\Cell\Link\Visualizar',
+    	'cellatualizar' => '\ZfTable\Decorator\Cell\Link\Atualizar',
+    	'cellremover' => '\ZfTable\Decorator\Cell\Link\Remover',
+    	'cellemail' => '\ZfTable\Decorator\Cell\Link\Email',
+    	'celldocumento' => '\ZfTable\Decorator\Cell\Documento',
+    	'celltelefone' => '\ZfTable\Decorator\Cell\Telefone',
+    	'celldownload' => '\ZfTable\Decorator\Cell\Link\Download',
+    	'cellhistorico' => '\ZfTable\Decorator\Cell\Link\Historico',
 
         'rowclass' => '\ZfTable\Decorator\Row\ClassDecorator',
         'rowvarattr' => '\ZfTable\Decorator\Row\VarAttr',

@@ -52,4 +52,11 @@ interface AdapterInterface
      * @return string
      */
     public function getQuickSearch();
+    
+    /**
+     * Check if a search was performed
+     *
+     * @return string
+     */
+    public function isSearch();
 }

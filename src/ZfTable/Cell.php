@@ -10,6 +10,7 @@ namespace ZfTable;
 
 use ZfTable\AbstractElement;
 use ZfTable\Decorator\DecoratorFactory;
+use Zend\Validator\Explode;
 
 class Cell extends AbstractElement
 {
@@ -39,8 +40,10 @@ class Cell extends AbstractElement
     {
         $decorator = DecoratorFactory::factoryCell($name, $options);
         $decorator->setCell($this);
+        $decorator->setTable($this->getTable());
         $this->attachDecorator($decorator);
-        return $decorator;
+        
+        return $this;
     }
 
     /**
@@ -84,32 +87,66 @@ class Cell extends AbstractElement
         $row = $this->getTable()->getRow()->getActualRow();
 
         $value = '';
-
+        
         if (is_array($row) || $row instanceof \ArrayAccess) {
             $value = (isset($row[$this->getHeader()->getName()])) ? $row[$this->getHeader()->getName()] : '';
         } elseif (is_object($row)) {
-            $headerName = $this->getHeader()->getName();
-            $methodName = 'get' . ucfirst($headerName);
-            if (method_exists($row, $methodName)) {
-                $value = $row->$methodName();
+            $tableAlias = $this->getHeader()->getTableAlias();
+            $headerName = $this->getHeader()->getColumn() ? $this->getHeader()->getColumn() : $this->getHeader()->getName();
+            $classActual = explode('\\', get_class($row));
+            
+            if (end($classActual) == $tableAlias) {
+            	$value = $this->extract($row, $headerName);
+            } elseif (is_null($tableAlias) || $tableAlias == '') {
+                $value = '';
             } else {
-                $value = (property_exists($row, $headerName)) ? $row->$headerName : '';
+            	$methodAlias = 'get' . ucfirst($tableAlias);
+            	$row = $row->$methodAlias();
+            	$value = $this->extract($row, $headerName);
             }
         }
 
-        foreach ($this->decorators as $decorator) {
-            if ($decorator->validConditions()) {
-                $value = $decorator->render($value);
-            }
+        if (count($this->decorators)) {
+	        $return = '';
+	        foreach ($this->decorators as $decorator) {
+	            if ($decorator->validConditions()) {
+	                $return .= $decorator->render($value);
+	            }
+	        }
+        } else {
+        	$return = $value;
         }
 
         if ($type == 'html') {
-            $ret = sprintf("<td %s>%s</td>", $this->getAttributes(), $value);
+            $ret = sprintf("<td %s>%s</td>", $this->getAttributes(), $return);
             $this->clearVar();
             return $ret;
 
         } else {
-            return $value;
+            return $return;
         }
+    }
+    
+    /**
+     * Extrair valor do atributo na row
+     * 
+     * @param  Object $row
+     * @param  string $headerName
+     * @return string
+     */
+    protected function extract($row, $headerName)
+    {
+        if(is_null($row)) {
+            return '';
+        }
+        
+    	$methodName = 'get' . ucfirst($headerName);
+    	
+    	if (method_exists($row, $methodName)) {
+    		$value = $row->$methodName();
+    	} else {
+    		$value = (property_exists($row, $headerName)) ? $row->$headerName : '';
+    	}
+    	return $value;
     }
 }

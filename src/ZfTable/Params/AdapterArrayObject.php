@@ -73,6 +73,27 @@ class AdapterArrayObject extends AbstractAdapter implements AdapterInterface, \Z
             throw new Exception\InvalidArgumentException('parameter must be instance of ArrayObject');
         }
     }
+    
+    /**
+     * (non-PHPdoc)
+     * @see \ZfTable\Params\AdapterInterface::isSearch()
+     */
+    public function isSearch()
+    {
+        if ($this->getQuickSearch()) {
+            return true;
+        }
+        
+        $array = (method_exists($this->object, 'toArray')) ? $this->object->toArray() : $this->object->getArrayCopy();
+        
+        foreach ($array as $k => $v) {
+            if (strpos($k, 'zff') !== false && $v != '') {
+                return true;
+            }
+        }
+        
+        return false;
+    }
 
     /**
      * Init method
@@ -84,12 +105,14 @@ class AdapterArrayObject extends AbstractAdapter implements AdapterInterface, \Z
         $this->page = (isset($array['zfTablePage'])) ? $array['zfTablePage'] : self::DEFAULT_PAGE;
         $this->column = (isset($array['zfTableColumn'])) ? $array['zfTableColumn'] : null;
         $this->order = (isset($array['zfTableOrder'])) ? $array['zfTableOrder'] : self::DEFAULT_ORDER;
-        $this->itemCountPerPage = (isset($array['zfTableItemPerPage']))
-            ? $array['zfTableItemPerPage'] : $this->getOptions()->getItemCountPerPage();
+        $this->itemCountPerPage = (isset($array['zfTableItemPerPage'])) ? $array['zfTableItemPerPage'] : $this->getOptions()->getItemCountPerPage();
         $this->quickSearch = (isset($array['zfTableQuickSearch'])) ? $array['zfTableQuickSearch'] : '';
-
+        
+        $options = $this->getTable()->getOptions();
+        $name = strtolower($options->getName());
+        
         //Init filters value
-        if ($this->getTable()->getOptions('showColumnFilters')) {
+        if ($options->getShowColumnFilters()) {
             foreach ($array as $key => $value) {
                 if (substr($key, 0, 4) == 'zff_') {
                     $this->filters[$key] = $value;
@@ -105,7 +128,8 @@ class AdapterArrayObject extends AbstractAdapter implements AdapterInterface, \Z
 
     public function getValueOfFilter($key, $prefix = 'zff_')
     {
-        return $this->filters[$prefix . $key];
+        $tablename = strtolower($this->getOptions()->getName()) . '_';
+        return $this->filters[$prefix . $tablename . $key];
     }
 
     /**

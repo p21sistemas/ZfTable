@@ -6,7 +6,7 @@
  * @license   MIT License
  */
 
-namespace ZfTable\Decorator\Header;
+namespace ZfTable\Decorator\Cell;
 
 class ClassDecorator extends AbstractCellDecorator
 {

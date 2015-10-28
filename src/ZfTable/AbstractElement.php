@@ -122,7 +122,7 @@ abstract class AbstractElement extends AbstractCommon
      * @return string
      */
     public function getClassName()
-    {
+    {   
         $className = '';
 
         if (count($this->class)) {

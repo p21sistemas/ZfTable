@@ -21,7 +21,15 @@ abstract class AbstractSource extends AbstractCommon implements SourceInterface
     protected $paramAdapter;
 
 
+    /**
+     * Table order
+     */
     abstract protected function order();
+    
+    /**
+     * Quick search
+     */
+    abstract protected function search();
 
     /**
      * @return \ZfTable\Params\AdapterInterface

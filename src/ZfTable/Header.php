@@ -20,6 +20,13 @@ class Header extends AbstractElement
      * @var string
      */
     protected $name;
+    
+    /**
+     * Name of column (should be the same like name in database)
+     *
+     * @var string
+     */
+    protected $column;
 
     /**
      * Title of header
@@ -87,6 +94,13 @@ class Header extends AbstractElement
         'asc' => 'desc',
         'desc' => 'asc'
     );
+    
+    /**
+     * Order by name
+     * 
+     * @var string
+     */
+    protected $orderBy;
 
     /**
      * Array of options
@@ -113,6 +127,7 @@ class Header extends AbstractElement
         $decorator = DecoratorFactory::factoryHeader($name, $options);
         $this->attachDecorator($decorator);
         $decorator->setHeader($this);
+        $decorator->setTable($this->getTable());
         return $decorator;
     }
 
@@ -124,12 +139,21 @@ class Header extends AbstractElement
      */
     public function setOptions($options)
     {
+        
+        if (isset($options['class']) && count($options['class']) > 0) {
+            foreach ($options['class'] as $class) {
+                $this->getCell()->addClass($class);
+            }
+        }
+    	
+    	$this->column = (isset($options['column'])) ? $options['column'] : '';
         $this->title = (isset($options['title'])) ? $options['title'] : '';
         $this->width = (isset($options['width'])) ? $options['width'] : '';
         $this->order = (isset($options['order'])) ? $options['order'] : true;
         $this->sortable = (isset($options['sortable'])) ? $options['sortable'] : true;
         $this->separatable = (isset($options['separatable'])) ? $options['separatable'] : $this->getSeparatable();
         $this->tableAlias = (isset($options['tableAlias'])) ? $options['tableAlias'] : '';
+        $this->orderBy = (isset($options['orderBy'])) ? $options['orderBy'] : '';
 
         if (isset($options['editable']) && $options['editable'] == true) {
             $this->editable = $options['editable'];
@@ -302,6 +326,16 @@ class Header extends AbstractElement
     {
         return $this->tableAlias;
     }
+    
+    /**
+     * Get order by reference
+     *
+     * @return string
+     */
+    public function getOrderBy()
+    {
+        return $this->orderBy;
+    }
 
     /**
      * Set reference to table
@@ -352,6 +386,17 @@ class Header extends AbstractElement
         foreach ($this->decorators as $decorator) {
             $render = $decorator->render($render);
         }
+        
         return sprintf('<th %s >%s</th>', $this->getAttributes(), $render);
+    }
+
+    /**
+     * Get column
+     * 
+     * @return string
+     */
+    public function getColumn()
+    {
+        return $this->column;
     }
 }

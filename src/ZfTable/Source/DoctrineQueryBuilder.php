@@ -17,13 +17,13 @@ class DoctrineQueryBuilder extends AbstractSource
 
     /**
      *
-     * @var  \Zend\Paginator\Paginator
+     * @var \Zend\Paginator\Paginator
      */
     protected $paginator;
 
     /**
      *
-     * @param \Doctrine\ORM\QueryBuilder $query
+     * @param \Doctrine\ORM\QueryBuilder $query            
      */
     public function __construct($query)
     {
@@ -36,40 +36,68 @@ class DoctrineQueryBuilder extends AbstractSource
      */
     public function getPaginator()
     {
-        if (!$this->paginator) {
-
-
+        if (! $this->paginator) {
+            
             $this->order();
-
-             $adapter = new DoctrineAdapter(new ORMPaginator($this->query));
-             $this->paginator = new Paginator($adapter);
-             $this->initPaginator();
-
+            $this->search();
+            
+            $adapter = new DoctrineAdapter(new ORMPaginator($this->query));
+            $this->paginator = new Paginator($adapter);
+            $this->initPaginator();
         }
+        
         return $this->paginator;
     }
 
+    /**
+     * Quick search
+     * 
+     * @return \ZfTable\Source\DoctrineQueryBuilder
+     */
+    protected function search()
+    {
+        if ($search = $this->getParamAdapter()->getQuickSearch()) {
+            foreach ($this->getTable()->getHeaders() as $k => $v) {
+                $column = isset($v['column']) ? $v['column'] : $k;
+                if (isset($v['tableAlias'])) {
+                    $this->query->orWhere($this->query->expr()->like($v['tableAlias'] . '.' . $column, "'%" . $search . "%'"));
+                }
+            }
+        }
+        
+        return $this;
+    }
 
-
+    /**
+     * (non-PHPdoc)
+     * 
+     * @see \ZfTable\Source\AbstractSource::order()
+     */
     protected function order()
     {
         $column = $this->getParamAdapter()->getColumn();
         $order = $this->getParamAdapter()->getOrder();
-
-        if (!$column) {
+        
+        if (! $column) {
             return;
         }
-
+        
         $header = $this->getTable()->getHeader($column);
         $tableAlias = ($header) ? $header->getTableAlias() : 'q';
-
-        if (false === strpos($tableAlias, '.')) {
-            $tableAlias = $tableAlias.'.'.$column;
+        $column = $header->getColumn() ? $header->getColumn() : $column;
+        $orderBy = $header->getOrderBy() ? $header->getOrderBy() : null;
+        
+        if($orderBy) {
+            $this->query->orderBy($orderBy, $order);
+            return $this;
         }
-
-        $this->query->orderBy($tableAlias, $order);
+        
+        if ($column) {
+            $this->query->orderBy($tableAlias . '.' . $column, $order);
+        }
+        
+        return $this;
     }
-
 
     public function getQuery()
     {

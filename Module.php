@@ -1,9 +1,6 @@
 <?php
 namespace ZfTable;
 
-use ZfTable\Example\Model\CustomerTable;
-
-
 class Module
 {
     public function getAutoloaderConfig()
@@ -24,11 +21,8 @@ class Module
     {
         return array(
             'factories' => array(
-                'ZfTable\Example\Model\CustomerTable' =>  function($sm) {
-                    $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
-                    $table = new CustomerTable($dbAdapter);
-                    return $table;
-                },
+
+			
             ),
            'aliases' => array(
                 'zfdb_adapter' => 'Zend\Db\Adapter\Adapter',
